@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>FEKRA Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0A0B; --bar: #0e0e10; --panel: #131316; --panel-2: #18181b; --line: rgba(255,255,255,.11);
+      --gold: #C5A880; --text: #F4F1EA; --muted: #9a978f; --danger: #d36a6a; --ok: #7fbf8f;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    code { background: var(--panel-2); padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+
+    /* ---------- top bar (Orders · Products · Chapters · Team · Settings) ---------- */
+    .topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 6px; height: 50px; padding: 0 14px; background: var(--bar); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+    .topbar::-webkit-scrollbar { display: none; }
+    .brand { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: 18px; letter-spacing: .34em; color: var(--gold); margin-right: 14px; white-space: nowrap; }
+    .tabs { display: flex; gap: 2px; }
+    .tab { padding: 8px 16px; border: 0; border-radius: 6px; background: none; color: #8f8d87; font: inherit; font-size: 14px; letter-spacing: 0; text-transform: none; cursor: pointer; white-space: nowrap; transition: .15s; }
+    .tab:hover { color: var(--text); }
+    .tab.active { background: var(--panel-2); color: var(--gold); }
+    .user { margin-left: auto; display: flex; align-items: center; gap: 10px; white-space: nowrap; padding-left: 14px; }
+    .whoami { color: var(--muted); font-size: 13px; }
+    .nbtn { padding: 6px 14px; border-radius: 6px; border: 1px solid #e6e3da; background: transparent; color: var(--text); font: inherit; font-size: 13px; letter-spacing: 0; text-transform: none; cursor: pointer; transition: .15s; }
+    .nbtn:hover { background: var(--text); color: #0A0A0B; }
+
+    .subbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px clamp(14px, 4vw, 40px); border-bottom: 1px solid var(--line); background: #0c0c0e; }
+    .status { font-size: 12.5px; color: var(--muted); }
+    .status.dirty { color: var(--gold); }
+    .status.ok { color: var(--ok); }
+    .status.bad { color: var(--danger); }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 26px clamp(14px, 4vw, 40px) 70px; }
+    h2 { margin: 0 0 14px; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 20px; margin-bottom: 22px; }
+    .grid2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+    @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+    .field { margin-bottom: 12px; }
+    label { display: block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 5px; }
+    input, select, textarea { width: 100%; padding: 9px 11px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); }
+    input[type=checkbox] { width: auto; accent-color: var(--gold); }
+    textarea { min-height: 70px; resize: vertical; }
+    .chk { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--text); margin: 4px 0 14px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    button.btn { font: inherit; cursor: pointer; padding: 9px 16px; border-radius: 4px; border: 1px solid var(--line); background: transparent; color: var(--text); letter-spacing: .08em; text-transform: uppercase; font-size: 11px; transition: .15s; }
+    button.btn:hover { border-color: var(--gold); color: var(--gold); }
+    button.primary { background: var(--gold); color: #0A0A0B; border-color: var(--gold); font-weight: 600; }
+    button.primary:hover { background: var(--text); border-color: var(--text); color: #0A0A0B; }
+    button.danger:hover { border-color: var(--danger); color: var(--danger); }
+    button.small { padding: 5px 10px; font-size: 10px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 0 8px 8px; white-space: nowrap; }
+    td { padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: middle; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td, tr.sel td { background: var(--panel-2); }
+    tr.off td { opacity: .45; }
+    td.title b { display: block; font-weight: 500; }
+    td.title small { color: var(--muted); }
+    .tag { display: inline-block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); }
+    .swatches { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
+    .swatches i { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); display: block; }
+    pre { margin: 0; max-height: 360px; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 12px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: #cfcabd; white-space: pre-wrap; word-break: break-word; }
+    .note { font-size: 12.5px; color: var(--muted); border-left: 2px solid var(--gold); padding: 8px 12px; background: var(--panel-2); margin: 14px 0 0; }
+    .empty { color: var(--muted); padding: 18px 8px; text-align: center; }
+    details { margin-top: 14px; }
+    summary { cursor: pointer; color: var(--gold); font-size: 13px; }
+    .kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 14px; font-size: 13px; }
+    .kv dt { color: var(--muted); }
+    .kv dd { margin: 0; word-break: break-word; white-space: pre-wrap; }
+    .chapters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .chapters .btn.active { border-color: var(--gold); color: var(--gold); background: var(--panel-2); }
+    .owner { display: flex; align-items: center; gap: 16px; }
+    .avatar { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--panel-2); border: 1px solid var(--gold); color: var(--gold); font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; }
+
+    /* ---------- sign-in gate ---------- */
+    #gate { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    .gatebox { width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 30px 28px; text-align: center; }
+    .gatebox .brand { margin: 0 0 6px; font-size: 24px; }
+    .gatebox p { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+    .gatebox form { text-align: left; }
+    .err { color: var(--danger); font-size: 12.5px; min-height: 18px; margin: 6px 0 10px; }
+
+    /* ---------- password dialog ---------- */
+    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 24px; width: min(92vw, 400px); }
+    dialog::backdrop { background: rgba(0,0,0,.7); }
+  </style>
+</head>
+<body>
+
+  <!-- ============ Sign-in gate ============ -->
+  <div id="gate">
+    <div class="gatebox">
+      <div class="brand">FEKRA</div>
+      <p id="gateSub">Owner sign-in</p>
+      <form id="gateForm" autocomplete="off">
+        <div class="field">
+          <label for="gateUser">Username</label>
+          <input type="text" id="gateUser" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+        </div>
+        <div class="field">
+          <label for="gatePass" id="gatePassLabel">Password</label>
+          <input type="password" id="gatePass" autocomplete="current-password" required>
+        </div>
+        <div class="field" id="gateConfirmWrap" hidden>
+          <label for="gateConfirm">Repeat password</label>
+          <input type="password" id="gateConfirm" autocomplete="new-password">
+        </div>
+        <div id="gateErr" class="err" role="alert"></div>
+        <button type="submit" class="btn primary" id="gateBtn" style="width:100%">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ Admin app ============ -->
+  <div id="app" hidden>
+    <nav class="topbar" aria-label="Admin sections">
+      <div class="brand">FEKRA</div>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="orders" role="tab">Orders</button>
+        <button type="button" class="tab" data-tab="products" role="tab">Products</button>
+        <button type="button" class="tab" data-tab="chapters" role="tab">Chapters</button>
+        <button type="button" class="tab" data-tab="team" role="tab">Team</button>
+        <button type="button" class="tab" data-tab="settings" role="tab">Settings</button>
+      </div>
+      <div class="user">
+        <span class="whoami" id="whoami"></span>
+        <button type="button" class="nbtn" id="pwBtn">Password</button>
+        <button type="button" class="nbtn" id="logoutBtn">Log out</button>
+      </div>
+    </nav>
+
+    <div class="subbar">
+      <span id="status" class="status">Loading catalog…</span>
+      <div class="actions">
+        <button type="button" class="btn small" id="reloadBtn">Reload live data</button>
+        <button type="button" class="btn small" id="importBtn">Import file…</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+        <button type="button" class="btn primary small" id="downloadJson">Download catalog.json</button>
+      </div>
+    </div>
+
+    <main>
+      <!-- ---------------- Orders ---------------- -->
+      <section id="tab-orders" data-panel="orders">
+        <div class="card">
+          <h2>Orders inbox</h2>
+          <div class="row">
+            <div class="field">
+              <label for="ordersKey">Admin key</label>
+              <input type="password" id="ordersKey" autocomplete="off" placeholder="the ADMIN_KEY from your Apps Script">
+              <div class="hint">Typed here each visit and never saved in any file. It is separate from the public order token on the storefront.</div>
+            </div>
+            <div class="field">
+              <label>Inbox</label>
+              <div class="hint" id="ordersUrlInfo" style="margin-top:9px"></div>
+            </div>
+          </div>
+          <label class="chk"><input type="checkbox" id="rememberKey"> Remember the key until I close this tab</label>
+          <div class="actions">
+            <button type="button" class="btn primary" id="loadOrdersBtn">Load orders</button>
+            <span id="ordersStatus" class="status"></span>
+          </div>
+
+          <details id="setupDetails">
+            <summary>One-time setup: let this page read your orders</summary>
+            <p class="hint" style="margin:10px 0">In your Google Apps Script project, add this next to your existing <code>doPost</code> (keep <code>doPost</code> as it is). If the script already has a <code>doGet</code>, merge the two. Change the secret, set <code>sheet</code> to the tab that stores orders, then use <b>Deploy &rarr; Manage deployments &rarr; Edit &rarr; New version</b>.</p>
+            <pre id="scriptSnippet"></pre>
+            <div class="actions" style="margin-top:10px"><button type="button" class="btn small" id="copySnippet">Copy code</button></div>
+          </details>
+        </div>
+
+        <div id="ordersResult" hidden>
+          <div class="grid2">
+            <div class="card">
+              <div class="toolbar">
+                <h2 style="margin:0">Orders <span id="ordersCount" style="color:var(--muted)"></span></h2>
+                <input type="search" id="ordersSearch" placeholder="Search orders…" style="max-width:220px">
+              </div>
+              <div class="scroll"><table><thead id="ordersHead"></thead><tbody id="ordersBody"></tbody></table></div>
+              <div id="ordersEmpty" class="empty" hidden>No orders found.</div>
+            </div>
+            <div class="card">
+              <h2>Order details</h2>
+              <div id="orderDetail" class="hint">Select an order to see everything the customer sent.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------- Products ---------------- -->
+      <section id="tab-products" data-panel="products" hidden>
+        <div class="grid2">
+          <div class="card">
+            <div class="toolbar">
+              <h2 style="margin:0">Products <span id="count" style="color:var(--muted)"></span></h2>
+            </div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Product</th><th>Price</th><th>Fit</th><th>On site</th><th></th></tr></thead>
+                <tbody id="productRows"></tbody>
+              </table>
+            </div>
+            <div id="emptyMsg" class="empty" hidden>No products yet. Add one with the form.</div>
+          </div>
+
+          <div class="card">
+            <h2 id="formTitle">Add product</h2>
+            <form id="productForm" autocomplete="off">
+              <div class="field"><label for="title">Title (English)</label><input type="text" id="title" placeholder="e.g. Midnight Lyric Tee" required></div>
+              <div class="field"><label for="arabicTitle">Title (Arabic)</label><input type="text" id="arabicTitle" dir="auto" placeholder="optional"></div>
+              <div class="row">
+                <div class="field">
+                  <label for="category">Collection</label>
+                  <select id="category"></select>
+                </div>
+                <div class="field"><label for="price">Price (<span id="curLabel">EGP</span>)</label><input type="number" id="price" min="0" step="1" placeholder="e.g. 160" required></div>
+              </div>
+              <div class="row">
+                <div class="field">
+                  <label for="fit">Fit / 3D model</label>
+                  <select id="fit">
+                    <option value="normal">Normal Tee (normal_tee.glb)</option>
+                    <option value="baggy">Baggy Tee (baggy_mesh.glb)</option>
+                    <option value="hoodie">Boxy Hoodie (white_mesh.glb)</option>
+                  </select>
+                </div>
+                <div class="field"><label for="edition">Edition label</label><input type="text" id="edition" placeholder="e.g. Boxy Fit"></div>
+              </div>
+              <div class="field"><label for="colors">Colours (hex, comma separated)</label><input type="text" id="colors" placeholder="#141416, #F6F5F2, #2B2C30"></div>
+              <div class="field"><label for="fabric">Print / fabric</label><input type="text" id="fabric" placeholder="e.g. Puff & Screen Ink"></div>
+              <div class="field"><label for="description">Description</label><textarea id="description"></textarea></div>
+              <div class="field"><label for="designUrl">Design image path (optional)</label><input type="text" id="designUrl" placeholder="./designs/sample-1.png"></div>
+              <label class="chk"><input type="checkbox" id="active" checked> Show this product on the storefront</label>
+              <div class="actions">
+                <button type="submit" class="btn primary" id="saveBtn">Add product</button>
+                <button type="button" class="btn" id="cancelBtn" hidden>Cancel edit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------- Chapters ---------------- -->
+      <section id="tab-chapters" data-panel="chapters" hidden>
+        <div class="card">
+          <h2>Chapters</h2>
+          <p class="hint" style="margin:-6px 0 14px">The story banner shown above the collections on the storefront. Changes apply as you type; download catalog.json to publish.</p>
+          <div class="chapters" id="chapterButtons"></div>
+          <div id="chapterForm">
+            <div class="field"><label for="chTag">Small label</label><input type="text" id="chTag"></div>
+            <div class="row">
+              <div class="field"><label for="chTitle">Headline</label><input type="text" id="chTitle"></div>
+              <div class="field"><label for="chArabic">Arabic name</label><input type="text" id="chArabic" dir="auto"></div>
+            </div>
+            <div class="field"><label for="chStory">Story</label><textarea id="chStory" style="min-height:160px"></textarea></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------- Team ---------------- -->
+      <section id="tab-team" data-panel="team" hidden>
+        <div class="card">
+          <h2>Team</h2>
+          <div class="owner">
+            <div class="avatar" id="ownerAvatar">A</div>
+            <div>
+              <div style="font-size:16px" id="ownerName"></div>
+              <div class="hint" style="margin:0">Owner &middot; full access</div>
+            </div>
+            <button type="button" class="btn small" id="pwBtn2" style="margin-left:auto">Change login</button>
+          </div>
+          <div class="note">This admin has a single owner sign-in. Separate staff accounts and permissions need a real server, which a GitHub Pages site does not have. To let someone help with orders, share the Apps Script admin key with them rather than this password.</div>
+        </div>
+      </section>
+
+      <!-- ---------------- Settings ---------------- -->
+      <section id="tab-settings" data-panel="settings" hidden>
+        <div class="card">
+          <h2>Store settings</h2>
+          <div class="row">
+            <div class="field"><label for="setWhatsapp">WhatsApp number</label><input type="text" id="setWhatsapp" inputmode="numeric" placeholder="201094390395"><div class="hint">Country code first, digits only.</div></div>
+            <div class="field"><label for="setWhatsappDisplay">WhatsApp as shown on the site</label><input type="text" id="setWhatsappDisplay" placeholder="+20 109 439 0395"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="setInstagram">Instagram handle</label><input type="text" id="setInstagram" placeholder="fekra.wear"><div class="hint">Without the @.</div></div>
+            <div class="field"><label for="setCurrency">Currency</label><input type="text" id="setCurrency" placeholder="EGP"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="setShipping">Delivery fee</label><input type="number" id="setShipping" min="0" step="1"><div class="hint">0 = confirmed with the customer on WhatsApp.</div></div>
+            <div class="field"><label for="setEndpoint">Orders inbox URL (Google Apps Script)</label><input type="url" id="setEndpoint" placeholder="https://script.google.com/macros/s/…/exec"><div class="hint">Used by the Orders tab. Changing it here does not change where the storefront sends orders.</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>catalog.json preview</h2>
+          <pre id="jsonPreview"></pre>
+          <div class="actions" style="margin-top:12px"><button type="button" class="btn small" id="copyBtn">Copy JSON</button></div>
+          <div class="note"><b>How publishing works:</b> change things here, press <b>Download catalog.json</b>, upload it to the root of your GitHub repository (replace the old one) and commit. The storefront reads it on every visit, so it goes live as soon as GitHub Pages finishes publishing. This page holds no GitHub token and cannot publish by itself.</div>
+          <div class="note"><b>About the password:</b> it keeps casual visitors out of this page, but the page and catalog.json are public files, so it is not bank-grade security. Use a long password. Your orders are protected separately by the Apps Script admin key.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ Change password ============ -->
+  <dialog id="pwDialog">
+    <form id="pwForm" method="dialog" autocomplete="off">
+      <h2>Username &amp; password</h2>
+      <div class="field"><label for="pwUser">Username</label><input type="text" id="pwUser" autocomplete="username" autocapitalize="off" spellcheck="false" required></div>
+      <div class="field"><label for="pwCur">Current password</label><input type="password" id="pwCur" autocomplete="current-password" required></div>
+      <div class="field"><label for="pwNew">New password (8+ characters)</label><input type="password" id="pwNew" autocomplete="new-password" placeholder="leave empty to keep the current one"></div>
+      <div class="field"><label for="pwNew2">Repeat new password</label><input type="password" id="pwNew2" autocomplete="new-password"></div>
+      <div id="pwErr" class="err" role="alert"></div>
+      <div class="actions"><button type="submit" class="btn primary" id="pwSave">Save</button><button type="button" class="btn" id="pwCancel">Cancel</button></div>
+      <p class="hint" style="margin-top:12px">After saving, download catalog.json and upload it to GitHub. The old password keeps working on the live site until you do.</p>
+    </form>
+  </dialog>
+
+  <script>
+    /* ================================================================
+       FEKRA admin — edits ./catalog.json in the browser, you download it
+       and upload it to GitHub. No tokens or passwords are stored in files.
+       ================================================================ */
+    const FIT_MODEL = { normal: "./normal_tee.glb", baggy: "./baggy_mesh.glb", hoodie: "./white_mesh.glb" };
+    const DEFAULT_COLORS = ["#141416", "#F6F5F2", "#2B2C30", "#CFC2AE"];
+    const CHAPTER_KEYS = ["all", "rasma", "8any", "e7sasy", "7oby"];
+    const CHAPTER_NAMES = { all: "All", rasma: "Rasma", "8any": "8any", e7sasy: "E7sasy", "7oby": "7oby" };
+    const DEFAULT_CATEGORY_LABELS = {
+      "rasma": "Rasma • رسمة", "8any": "8any • أغاني", "e7sasy": "E7sasy • إحساسي", "7oby": "7oby • حبي (Pair of 2 Tees)"
+    };
+
+    const SCRIPT_SNIPPET = `// ---- Add to your Google Apps Script (keep your existing doPost) ----
+const ADMIN_KEY = 'PUT-A-LONG-RANDOM-SECRET-HERE';   // different from the storefront TOKEN
+
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.action !== 'list' || p.key !== ADMIN_KEY) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'unauthorized' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];   // the tab where orders are saved
+  const rows = sheet.getDataRange().getDisplayValues();
+  const head = rows.shift();
+  const orders = rows
+    .filter(r => r.some(c => c !== ''))
+    .map(r => Object.fromEntries(head.map((h, i) => [h, r[i]])))
+    .reverse();                                                          // newest first
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, orders }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+    let catalogData = emptyCatalog();
+    let loaded = false;
+    let dirty = false;
+    let editingId = null;
+    let currentChapter = "all";
+    let ordersData = [];
+    let selectedOrder = -1;
+
+    const $ = (id) => document.getElementById(id);
+
+    function emptyCatalog() {
+      return {
+        brand: "FEKRA", currency: "EGP",
+        settings: { whatsapp: "", whatsappDisplay: "", instagram: "", shippingFee: 0, ordersEndpoint: "" },
+        chapters: {}, admin: null, products: []
+      };
+    }
+
+    /* ---------------- password hashing (PBKDF2 via WebCrypto) ---------------- */
+    const b64ToBytes = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+    const bytesToB64 = (u8) => btoa(String.fromCharCode(...u8));
+    async function hashPass(pass, saltB64, iterations) {
+      if (!window.crypto || !crypto.subtle) throw new Error("Open this page over https (your GitHub Pages address) to sign in.");
+      const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveBits"]);
+      const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: b64ToBytes(saltB64), iterations, hash: "SHA-256" }, key, 256);
+      return bytesToB64(new Uint8Array(bits));
+    }
+    async function makeAdminRecord(pass, owner) {
+      const salt = bytesToB64(crypto.getRandomValues(new Uint8Array(16)));
+      const iterations = 150000;
+      return { owner: owner || "Abdelnasser", role: "owner", salt, iterations, passcodeHash: await hashPass(pass, salt, iterations) };
+    }
+
+    /* ---------------- session (this tab only) ---------------- */
+    const SESSION_KEY = "fekraAdminSession";
+    const sessionGet = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+    const sessionSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} };
+    const sessionDel = (k) => { try { sessionStorage.removeItem(k); } catch (e) {} };
+
+    /* ---------------- loading / normalising the catalog ---------------- */
+    function normalise(data, keepAdmin) {
+      if (!data || !Array.isArray(data.products)) throw new Error("Not a FEKRA catalog (missing products list)");
+      const base = emptyCatalog();
+      return {
+        brand: data.brand || "FEKRA",
+        currency: data.currency || "EGP",
+        settings: Object.assign(base.settings, data.settings || {}),
+        chapters: data.chapters && typeof data.chapters === "object" ? JSON.parse(JSON.stringify(data.chapters)) : {},
+        admin: data.admin && data.admin.passcodeHash ? { ...data.admin } : (keepAdmin || null),
+        products: data.products.map((p) => ({ ...p }))
+      };
+    }
+
+    async function fetchCatalog() {
+      const res = await fetch(`./catalog.json?t=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return await res.json();
+    }
+
+    function setStatus(text, kind) {
+      const el = $("status");
+      el.textContent = text;
+      el.className = "status" + (kind ? " " + kind : "");
+    }
+    function markDirty() {
+      dirty = true;
+      setStatus("Unsaved changes — download catalog.json and upload it to GitHub", "dirty");
+      renderPreview();
+    }
+
+    /* ---------------- gate ---------------- */
+    let gateMode = "login";   // "login" | "create"
+    let failedLogins = 0;
+
+    function showGate() {
+      $("app").hidden = true;
+      $("gate").hidden = false;
+      const create = loaded && !(catalogData.admin && catalogData.admin.passcodeHash);
+      gateMode = create ? "create" : "login";
+      $("gateSub").textContent = !loaded ? "Could not load catalog.json" : (create ? "No login is set yet — create the owner username and password" : "Owner sign-in");
+      $("gatePassLabel").textContent = create ? "New password (8+ characters)" : "Password";
+      $("gateConfirmWrap").hidden = !create;
+      $("gateConfirm").required = create;
+      $("gateBtn").textContent = create ? "Create password" : "Sign in";
+      $("gateBtn").disabled = !loaded;
+      $("gateUser").value = ""; $("gatePass").value = ""; $("gateConfirm").value = "";
+      $("gateUser").focus();
+    }
+
+    function updateWho() {
+      const a = catalogData.admin || { owner: "Abdelnasser", role: "owner" };
+      $("whoami").textContent = a.owner + " · " + a.role;
+      $("ownerName").textContent = a.owner;
+      $("ownerAvatar").textContent = (a.owner || "?").charAt(0).toUpperCase();
+    }
+
+    function enterApp() {
+      $("gate").hidden = true;
+      $("app").hidden = false;
+      updateWho();
+      renderAll();
+      switchTab(sessionGet("fekraAdminTab") || "orders");
+    }
+
+    $("gateForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const err = $("gateErr");
+      err.textContent = "";
+      const pass = $("gatePass").value;
+      const user = $("gateUser").value.trim();
+      try {
+        if (gateMode === "create") {
+          if (!user) throw new Error("Enter a username.");
+          if (pass.length < 8) throw new Error("Use at least 8 characters.");
+          if (pass !== $("gateConfirm").value) throw new Error("The two passwords do not match.");
+          catalogData.admin = await makeAdminRecord(pass, user);
+          sessionSet(SESSION_KEY, "1");
+          enterApp();
+          markDirty();
+          return;
+        }
+        const a = catalogData.admin;
+        $("gateBtn").disabled = true;
+        const hash = await hashPass(pass, a.salt, a.iterations || 150000);
+        if (failedLogins > 0) await new Promise((r) => setTimeout(r, Math.min(failedLogins, 5) * 600));
+        if (hash !== a.passcodeHash || user.toLowerCase() !== String(a.owner || "").toLowerCase()) {
+          failedLogins++;
+          throw new Error("Incorrect username or password.");
+        }
+        failedLogins = 0;
+        sessionSet(SESSION_KEY, "1");
+        enterApp();
+      } catch (ex) {
+        err.textContent = ex.message;
+      } finally {
+        $("gateBtn").disabled = !loaded;
+      }
+    });
+
+    $("logoutBtn").addEventListener("click", () => {
+      if (dirty && !confirm("You have unsaved changes. Log out anyway?")) return;
+      dirty = false;
+      sessionDel(SESSION_KEY); sessionDel("fekraAdminKey");
+      $("ordersKey").value = "";
+      ordersData = []; $("ordersResult").hidden = true;
+      showGate();
+    });
+
+    /* ---------------- tabs ---------------- */
+    function switchTab(name) {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+      document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== name; });
+      sessionSet("fekraAdminTab", name);
+    }
+    document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+
+    /* ---------------- render everything ---------------- */
+    function categoryLabels() {
+      return { ...DEFAULT_CATEGORY_LABELS, ...Object.fromEntries(catalogData.products.filter((p) => p.category && p.categoryLabel).map((p) => [p.category, p.categoryLabel])) };
+    }
+    function renderAll() {
+      $("curLabel").textContent = catalogData.currency;
+      fillCategorySelect();
+      renderProducts();
+      renderChapterButtons();
+      renderChapter();
+      renderSettings();
+      renderOrdersMeta();
+      renderPreview();
+      resetForm();
+    }
+    function renderPreview() { $("jsonPreview").textContent = JSON.stringify(catalogData, null, 2); }
+
+    /* ================= PRODUCTS ================= */
+    function fillCategorySelect() {
+      const sel = $("category");
+      const keep = sel.value;
+      sel.textContent = "";
+      const labels = categoryLabels();
+      Object.keys(labels).forEach((k) => { const o = document.createElement("option"); o.value = k; o.textContent = labels[k]; sel.append(o); });
+      if (keep && labels[keep]) sel.value = keep;
+    }
+
+    function renderProducts() {
+      const body = $("productRows");
+      body.textContent = "";
+      $("count").textContent = "(" + catalogData.products.length + ")";
+      $("emptyMsg").hidden = catalogData.products.length > 0;
+      catalogData.products.forEach((p) => {
+        const tr = document.createElement("tr");
+        if (p.active === false) tr.className = "off";
+
+        const tdTitle = document.createElement("td"); tdTitle.className = "title";
+        const b = document.createElement("b"); b.textContent = p.title || "(untitled)";
+        const small = document.createElement("small"); small.textContent = (p.categoryLabel || p.category || "") + " · " + p.id;
+        tdTitle.append(b, small);
+
+        const tdPrice = document.createElement("td"); tdPrice.textContent = Number(p.price || 0).toLocaleString("en-US");
+
+        const tdFit = document.createElement("td");
+        const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = p.fit || "-";
+        tdFit.append(tag);
+        if (Array.isArray(p.colors) && p.colors.length) {
+          const sw = document.createElement("span"); sw.className = "swatches";
+          p.colors.slice(0, 6).forEach((c) => { const i = document.createElement("i"); i.style.background = /^#[0-9a-f]{3,8}$/i.test(c) ? c : "transparent"; sw.append(i); });
+          tdFit.append(sw);
+        }
+
+        const tdActive = document.createElement("td");
+        const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = p.active !== false; cb.title = "Show on storefront";
+        cb.addEventListener("change", () => { p.active = cb.checked; markDirty(); renderProducts(); });
+        tdActive.append(cb);
+
+        const tdAct = document.createElement("td");
+        const actions = document.createElement("div"); actions.className = "actions";
+        const edit = document.createElement("button"); edit.type = "button"; edit.className = "btn small"; edit.textContent = "Edit";
+        edit.addEventListener("click", () => startEdit(p.id));
+        const del = document.createElement("button"); del.type = "button"; del.className = "btn small danger"; del.textContent = "Delete";
+        del.addEventListener("click", () => removeProduct(p.id));
+        actions.append(edit, del); tdAct.append(actions);
+
+        tr.append(tdTitle, tdPrice, tdFit, tdActive, tdAct);
+        body.append(tr);
+      });
+    }
+
+    function nextId(category) {
+      const used = new Set(catalogData.products.map((p) => p.id));
+      let n = catalogData.products.filter((p) => p.category === category).length + 1;
+      let id;
+      do { id = category + "-" + String(n).padStart(2, "0"); n++; } while (used.has(id));
+      return id;
+    }
+    function parseColors(text) {
+      const list = text.split(/[\s,;]+/).map((c) => c.trim()).filter(Boolean)
+        .map((c) => (c.startsWith("#") ? c : "#" + c))
+        .filter((c) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c));
+      return list.length ? list : DEFAULT_COLORS.slice();
+    }
+    function resetForm() {
+      editingId = null;
+      $("productForm").reset();
+      $("active").checked = true;
+      $("formTitle").textContent = "Add product";
+      $("saveBtn").textContent = "Add product";
+      $("cancelBtn").hidden = true;
+    }
+    function startEdit(id) {
+      const p = catalogData.products.find((x) => x.id === id);
+      if (!p) return;
+      editingId = id;
+      $("title").value = p.title || "";
+      $("arabicTitle").value = p.arabicTitle || "";
+      $("category").value = p.category;
+      $("price").value = p.price ?? "";
+      $("fit").value = FIT_MODEL[p.fit] ? p.fit : "normal";
+      $("edition").value = p.edition || "";
+      $("colors").value = (p.colors || []).join(", ");
+      $("fabric").value = p.fabric || "";
+      $("description").value = p.description || "";
+      $("designUrl").value = p.designUrl || "";
+      $("active").checked = p.active !== false;
+      $("formTitle").textContent = "Edit product — " + id;
+      $("saveBtn").textContent = "Save changes";
+      $("cancelBtn").hidden = false;
+      $("productForm").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    function removeProduct(id) {
+      const p = catalogData.products.find((x) => x.id === id);
+      if (!p || !confirm('Remove "' + (p.title || id) + '" from the catalog?')) return;
+      catalogData.products = catalogData.products.filter((x) => x.id !== id);
+      if (editingId === id) resetForm();
+      markDirty(); renderProducts();
+    }
+    $("productForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const category = $("category").value;
+      const fit = $("fit").value;
+      const existing = editingId ? catalogData.products.find((x) => x.id === editingId) : null;
+      const product = {
+        ...(existing || {}),
+        id: existing ? existing.id : nextId(category),
+        title: $("title").value.trim(),
+        arabicTitle: $("arabicTitle").value.trim(),
+        category,
+        categoryLabel: categoryLabels()[category],
+        price: Number($("price").value),
+        fit, model: FIT_MODEL[fit],
+        colors: parseColors($("colors").value),
+        edition: $("edition").value.trim(),
+        fabric: $("fabric").value.trim(),
+        description: $("description").value.trim(),
+        image: (existing && existing.image) || "",
+        designUrl: $("designUrl").value.trim(),
+        active: $("active").checked
+      };
+      if (existing) catalogData.products[catalogData.products.indexOf(existing)] = product;
+      else catalogData.products.push(product);
+      resetForm(); markDirty(); renderProducts();
+    });
+    $("cancelBtn").addEventListener("click", resetForm);
+
+    /* ================= CHAPTERS ================= */
+    function renderChapterButtons() {
+      const box = $("chapterButtons");
+      box.textContent = "";
+      CHAPTER_KEYS.forEach((k) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "btn small" + (k === currentChapter ? " active" : "");
+        b.textContent = CHAPTER_NAMES[k];
+        b.addEventListener("click", () => { currentChapter = k; renderChapterButtons(); renderChapter(); });
+        box.append(b);
+      });
+    }
+    function renderChapter() {
+      const c = catalogData.chapters[currentChapter] || {};
+      $("chTag").value = c.tag || "";
+      $("chTitle").value = c.title || "";
+      $("chArabic").value = c.arabic || "";
+      $("chStory").value = c.story || "";
+    }
+    [["chTag", "tag"], ["chTitle", "title"], ["chArabic", "arabic"], ["chStory", "story"]].forEach(([id, field]) => {
+      $(id).addEventListener("input", () => {
+        const c = catalogData.chapters[currentChapter] || (catalogData.chapters[currentChapter] = {});
+        c[field] = $(id).value;
+        markDirty();
+      });
+    });
+
+    /* ================= SETTINGS ================= */
+    const SETTING_FIELDS = [
+      ["setWhatsapp", (v) => (catalogData.settings.whatsapp = v.replace(/\D/g, ""))],
+      ["setWhatsappDisplay", (v) => (catalogData.settings.whatsappDisplay = v.trim())],
+      ["setInstagram", (v) => (catalogData.settings.instagram = v.trim().replace(/^@/, ""))],
+      ["setCurrency", (v) => { catalogData.currency = v.trim().toUpperCase() || "EGP"; $("curLabel").textContent = catalogData.currency; }],
+      ["setShipping", (v) => (catalogData.settings.shippingFee = Math.max(0, Number(v) || 0))],
+      ["setEndpoint", (v) => { catalogData.settings.ordersEndpoint = v.trim(); renderOrdersMeta(); }]
+    ];
+    function renderSettings() {
+      const s = catalogData.settings;
+      $("setWhatsapp").value = s.whatsapp || "";
+      $("setWhatsappDisplay").value = s.whatsappDisplay || "";
+      $("setInstagram").value = s.instagram || "";
+      $("setCurrency").value = catalogData.currency || "EGP";
+      $("setShipping").value = s.shippingFee ?? 0;
+      $("setEndpoint").value = s.ordersEndpoint || "";
+    }
+    SETTING_FIELDS.forEach(([id, apply]) => $(id).addEventListener("input", () => { apply($(id).value); markDirty(); }));
+
+    /* ================= ORDERS ================= */
+    $("scriptSnippet").textContent = SCRIPT_SNIPPET;
+    $("copySnippet").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(SCRIPT_SNIPPET); $("ordersStatus").textContent = "Code copied"; $("ordersStatus").className = "status ok"; }
+      catch (e) { $("ordersStatus").textContent = "Could not copy — select the code instead"; $("ordersStatus").className = "status bad"; }
+    });
+
+    function renderOrdersMeta() {
+      const url = (catalogData.settings.ordersEndpoint || "").trim();
+      $("ordersUrlInfo").textContent = url ? "Connected to your Apps Script inbox (set in Settings)." : "No inbox URL yet — add it in Settings.";
+      const saved = sessionGet("fekraAdminKey");
+      if (saved && !$("ordersKey").value) { $("ordersKey").value = saved; $("rememberKey").checked = true; }
+    }
+
+    function ordersMsg(text, kind) { const el = $("ordersStatus"); el.textContent = text; el.className = "status" + (kind ? " " + kind : ""); }
+
+    async function loadOrders() {
+      const url = (catalogData.settings.ordersEndpoint || "").trim();
+      const key = $("ordersKey").value.trim();
+      if (!url) { ordersMsg("Add the Orders inbox URL in Settings first.", "bad"); return; }
+      if (!key) { ordersMsg("Type your admin key first.", "bad"); return; }
+      ordersMsg("Loading…");
+      try {
+        const res = await fetch(url + (url.includes("?") ? "&" : "?") + "action=list&key=" + encodeURIComponent(key) + "&t=" + Date.now(), { cache: "no-store" });
+        const data = await res.json();
+        if (!data || !data.ok) throw new Error(data && data.error === "unauthorized" ? "The admin key was not accepted." : ((data && data.error) || "The inbox did not return a list of orders."));
+        ordersData = Array.isArray(data.orders) ? data.orders : [];
+        if ($("rememberKey").checked) sessionSet("fekraAdminKey", key); else sessionDel("fekraAdminKey");
+        selectedOrder = -1;
+        $("ordersSearch").value = "";
+        renderOrders();
+        ordersMsg("Loaded " + ordersData.length + " order" + (ordersData.length === 1 ? "" : "s"), "ok");
+        $("setupDetails").open = false;
+      } catch (e) {
+        const net = /failed to fetch|networkerror|load failed/i.test(e.message);
+        ordersMsg(net ? "Could not reach the inbox. Add the doGet code from the setup box and deploy a new version." : e.message, "bad");
+      }
+    }
+    $("loadOrdersBtn").addEventListener("click", loadOrders);
+    $("ordersKey").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); loadOrders(); } });
+
+    function ordersColumns(rows) {
+      const all = [];
+      rows.forEach((r) => Object.keys(r).forEach((k) => { if (!all.includes(k)) all.push(k); }));
+      const prefer = [/order.?id|^id$/i, /date|time|created/i, /name|customer/i, /whats|phone|contact/i, /total|amount/i, /status|payment/i];
+      const picked = [];
+      prefer.forEach((re) => { const k = all.find((c) => re.test(c) && !picked.includes(c)); if (k) picked.push(k); });
+      all.forEach((k) => { if (picked.length < 6 && !picked.includes(k)) picked.push(k); });
+      return picked.slice(0, 6);
+    }
+    function short(v) { const s = typeof v === "object" ? JSON.stringify(v) : String(v ?? ""); return s.length > 44 ? s.slice(0, 43) + "…" : s; }
+
+    function renderOrders() {
+      $("ordersResult").hidden = false;
+      const q = $("ordersSearch").value.trim().toLowerCase();
+      const rows = ordersData.map((o, i) => ({ o, i })).filter(({ o }) => !q || JSON.stringify(o).toLowerCase().includes(q));
+      $("ordersCount").textContent = "(" + rows.length + (q ? " of " + ordersData.length : "") + ")";
+      const cols = ordersColumns(ordersData);
+      const head = $("ordersHead"); head.textContent = "";
+      const htr = document.createElement("tr");
+      cols.forEach((c) => { const th = document.createElement("th"); th.textContent = c; htr.append(th); });
+      head.append(htr);
+      const body = $("ordersBody"); body.textContent = "";
+      rows.forEach(({ o, i }) => {
+        const tr = document.createElement("tr");
+        tr.className = "clickable" + (i === selectedOrder ? " sel" : "");
+        cols.forEach((c) => { const td = document.createElement("td"); td.textContent = short(o[c]); tr.append(td); });
+        tr.addEventListener("click", () => { selectedOrder = i; renderOrders(); renderOrderDetail(); });
+        body.append(tr);
+      });
+      $("ordersEmpty").hidden = rows.length > 0;
+      renderOrderDetail();
+    }
+    function prettyValue(v) {
+      if (typeof v === "string") {
+        const t = v.trim();
+        if ((t.startsWith("{") && t.endsWith("}")) || (t.startsWith("[") && t.endsWith("]"))) {
+          try { return JSON.stringify(JSON.parse(t), null, 2); } catch (e) {}
+        }
+        return v;
+      }
+      return typeof v === "object" ? JSON.stringify(v, null, 2) : String(v ?? "");
+    }
+    function renderOrderDetail() {
+      const box = $("orderDetail"); box.textContent = "";
+      const o = ordersData[selectedOrder];
+      if (!o) { box.className = "hint"; box.textContent = "Select an order to see everything the customer sent."; return; }
+      box.className = "";
+      const dl = document.createElement("dl"); dl.className = "kv";
+      Object.keys(o).forEach((k) => {
+        const dt = document.createElement("dt"); dt.textContent = k;
+        const dd = document.createElement("dd"); dd.textContent = prettyValue(o[k]);
+        dl.append(dt, dd);
+      });
+      box.append(dl);
+    }
+    $("ordersSearch").addEventListener("input", renderOrders);
+
+    /* ================= PASSWORD ================= */
+    function openPw() {
+      $("pwForm").reset(); $("pwErr").textContent = "";
+      $("pwUser").value = (catalogData.admin && catalogData.admin.owner) || "";
+      $("pwDialog").showModal();
+    }
+    $("pwBtn").addEventListener("click", openPw);
+    $("pwBtn2").addEventListener("click", openPw);
+    $("pwCancel").addEventListener("click", () => $("pwDialog").close());
+    $("pwForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const err = $("pwErr"); err.textContent = "";
+      try {
+        const a = catalogData.admin;
+        const cur = await hashPass($("pwCur").value, a.salt, a.iterations || 150000);
+        if (cur !== a.passcodeHash) throw new Error("Your current password is not correct.");
+        const user = $("pwUser").value.trim();
+        if (!user) throw new Error("Enter a username.");
+        const next = $("pwNew").value;
+        if (next) {
+          if (next.length < 8) throw new Error("Use at least 8 characters.");
+          if (next !== $("pwNew2").value) throw new Error("The two new passwords do not match.");
+        }
+        catalogData.admin = await makeAdminRecord(next || $("pwCur").value, user);
+        updateWho();
+        $("pwDialog").close();
+        markDirty();
+        setStatus("Login details changed — download catalog.json and upload it to GitHub to make them live", "dirty");
+      } catch (ex) { err.textContent = ex.message; }
+    });
+
+    /* ================= TOP-BAR ACTIONS ================= */
+    $("downloadJson").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(catalogData, null, 2) + "\n"], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "catalog.json";
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      dirty = false;
+      setStatus("Downloaded — now upload catalog.json to the root of your GitHub repository", "ok");
+    });
+    $("copyBtn").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(JSON.stringify(catalogData, null, 2) + "\n"); setStatus("JSON copied to clipboard", "ok"); }
+      catch (e) { setStatus("Could not copy — select the preview text instead", "bad"); }
+    });
+    $("reloadBtn").addEventListener("click", async () => {
+      if (dirty && !confirm("Discard your unsaved changes and reload the live data?")) return;
+      try {
+        catalogData = normalise(await fetchCatalog(), catalogData.admin);
+        dirty = false; renderAll(); setStatus("Live data loaded", "ok");
+      } catch (e) { setStatus("Could not load ./catalog.json", "bad"); }
+    });
+    $("importBtn").addEventListener("click", () => $("importFile").click());
+    $("importFile").addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      try {
+        catalogData = normalise(JSON.parse(await file.text()), catalogData.admin);
+        renderAll(); markDirty();
+      } catch (err) { setStatus("Could not import: " + err.message, "bad"); }
+    });
+    window.addEventListener("beforeunload", (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+    /* ================= START ================= */
+    (async function init() {
+      try {
+        catalogData = normalise(await fetchCatalog(), null);
+        loaded = true;
+        setStatus("Live data loaded", "ok");
+      } catch (e) {
+        loaded = false;
+        setStatus("Could not load ./catalog.json (open this page from your GitHub Pages site, not as a local file)", "bad");
+      }
+      if (loaded && sessionGet(SESSION_KEY) === "1" && catalogData.admin && catalogData.admin.passcodeHash) enterApp();
+      else showGate();
+    })();
+  </script>
+</body>
+</html>
